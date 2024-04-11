@@ -2,6 +2,7 @@ package limitlistener
 
 import (
 	"net"
+	"runtime"
 	"sync/atomic"
 )
 
@@ -53,19 +54,28 @@ func (ll *limitListener) Accept() (net.Conn, error) {
 
 	// do not increment ll.count since it already factors the pending connection
 
-	return &limitListenerConn{Conn: c, ll: ll}, nil
+	res := &limitListenerConn{Conn: c, ll: ll}
+	runtime.SetFinalizer(res, freeLimitListenerConn)
+
+	return res, nil
 }
 
-// freeOne is called when a connection is closed, and will decrease the counter by one and wake
-// any thread waiting for the connection count to change.
-func (ll *limitListener) freeOne() {
-	ll.limit.Done()
+// freeLimitListenerConn calls free on the connection if it is not referenced anymore, allowing
+// resources freed by go's garbage collector to not block the listener.
+func freeLimitListenerConn(cll *limitListenerConn) {
+	cll.free()
+}
+
+// free calls Done() on the Limiter associated to the connection exactly once, and allows other
+// connections to be processed.
+func (cll *limitListenerConn) free() {
+	if atomic.AddUint64(&cll.closed, 1) == 1 {
+		// free one count
+		cll.ll.limit.Done()
+	}
 }
 
 func (cll *limitListenerConn) Close() error {
-	if atomic.AddUint64(&cll.closed, 1) == 1 {
-		// free one count
-		cll.ll.freeOne()
-	}
+	cll.free()
 	return cll.Conn.Close()
 }

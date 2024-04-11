@@ -12,6 +12,7 @@ type Limiter struct {
 	cd  *sync.Cond
 }
 
+// NewLimiter returns a new limiter with the given maximum number of ongoing processes
 func NewLimiter(max uint64) *Limiter {
 	res := &Limiter{max: max}
 	res.cd = sync.NewCond(&res.lk)
