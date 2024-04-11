@@ -1,3 +1,5 @@
+[![GoDoc](https://godoc.org/github.com/KarpelesLab/limitlistener?status.svg)](https://godoc.org/github.com/KarpelesLab/limitlistener)
+
 # limitlistener
 
 This library makes it easy to limit the number of live threads for a given listener. This
