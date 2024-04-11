@@ -17,6 +17,22 @@ if err != nil {
 
 // limit to 128 concurrent processes
 l = limitlistener.New(l, 128)
+
+for {
+    c, err := l.Accept()
+    if err != nil {
+        return err
+    }
+
+    // safe to start a goroutine here, will be limited to 128 routines
+    go handleClient(c)
+}
+
+handleClient(c net.Conn) {
+    defer c.Close()
+
+    // ...
+}
 ```
 
 This can be used for a `http.Server` or anything that takes a `net.Listener` and will
