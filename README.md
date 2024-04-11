@@ -15,3 +15,7 @@ if err != nil {
 // limit to 128 concurrent processes
 l = limitlistener.New(l, 128)
 ```
+
+This can be used for a `http.Server` or anything that takes a `net.Listener` and will
+apply the limit as standard as possible. Multiple threads calling Accept() are also
+supported.
